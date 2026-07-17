@@ -3,6 +3,7 @@ import subprocess
 import json
 import logging
 from models.schemas import PlannerOutput
+from integrations import twilio_direct
 
 logger = logging.getLogger(__name__)
 
@@ -42,33 +43,49 @@ def _zero_fetch(url: str, payload: dict, capability: str) -> None:
 
 
 def send_approval_sms(message: str) -> None:
-    _zero_fetch(
-        SMS_ENDPOINT,
-        {"to": os.environ["TWILIO_TO_NUMBER"], "body": message},
-        SMS_CAPABILITY
-    )
+    if os.getenv("USE_ZERO_LIVE", "false").lower() == "true":
+        _zero_fetch(
+            SMS_ENDPOINT,
+            {"to": os.environ["TWILIO_TO_NUMBER"], "body": message},
+            SMS_CAPABILITY
+        )
+    elif os.getenv("TWILIO_ACCOUNT_SID") and os.getenv("TWILIO_AUTH_TOKEN"):
+        twilio_direct.send_sms(message)
+    else:
+        logger.warning(f"[Mock SMS] Approval SMS would be sent: {message}")
 
 
 def send_confirmation_sms(message: str) -> None:
-    _zero_fetch(
-        SMS_ENDPOINT,
-        {"to": os.environ["TWILIO_TO_NUMBER"], "body": message},
-        SMS_CAPABILITY
-    )
+    if os.getenv("USE_ZERO_LIVE", "false").lower() == "true":
+        _zero_fetch(
+            SMS_ENDPOINT,
+            {"to": os.environ["TWILIO_TO_NUMBER"], "body": message},
+            SMS_CAPABILITY
+        )
+    elif os.getenv("TWILIO_ACCOUNT_SID") and os.getenv("TWILIO_AUTH_TOKEN"):
+        twilio_direct.send_sms(message)
+    else:
+        logger.warning(f"[Mock SMS] Confirmation SMS would be sent: {message}")
 
 
 def execute_payments(itinerary: PlannerOutput) -> None:
-    url = os.environ["MOCK_PAYMENT_WEBHOOK_URL"]
-    for item in itinerary.items:
-        import requests
-        response = requests.post(
-            url,
-            json={
-                "vendor_id": item.vendor_id,
-                "name": item.name,
-                "amount_usd": item.cost_usd,
-                "action": "charge",
-            },
-            timeout=10,
-        )
-        response.raise_for_status()
+    if os.getenv("MOCK_PAYMENT_WEBHOOK_URL"):
+        url = os.environ["MOCK_PAYMENT_WEBHOOK_URL"]
+        for item in itinerary.items:
+            import requests
+            try:
+                response = requests.post(
+                    url,
+                    json={
+                        "vendor_id": item.vendor_id,
+                        "name": item.name,
+                        "amount_usd": item.cost_usd,
+                        "action": "charge",
+                    },
+                    timeout=10,
+                )
+                response.raise_for_status()
+            except Exception as e:
+                logger.warning(f"Mock payment webhook failed: {e}")
+    else:
+        logger.warning("No MOCK_PAYMENT_WEBHOOK_URL configured, skipping payments.")

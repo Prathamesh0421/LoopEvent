@@ -81,10 +81,10 @@ def run_evaluator(
         if start == -1:
             raise ValueError("Evaluator response did not contain a JSON object")
         llm_result = EvaluatorOutput(**json.loads(response_text[start:]))
-    except (AttributeError, TypeError, ValueError, json.JSONDecodeError):
+    except Exception:
         return hard_result.model_copy(
             update={"reason": (
-                "[safety-net fallback] The evaluator response was malformed; "
+                "[safety-net fallback] The evaluator response was unavailable or malformed; "
                 f"deterministic validation applied. {hard_result.reason}"
             )}
         )

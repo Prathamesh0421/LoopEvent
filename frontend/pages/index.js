@@ -8,7 +8,8 @@ export default function Home() {
 
   async function handleSubmit(request) {
     const session = await submitPlan(request);
-    await router.push(`/dashboard?session=${session.session_id}`);
+    // Route to the map/selection page instead of directly to dashboard
+    await router.push(`/select?session=${session.session_id}`);
   }
 
   return (
@@ -24,14 +25,27 @@ export default function Home() {
       <main className="hero">
         <section>
           <p className="eyebrow">Autonomous event intelligence</p>
-          <h1 className="hero-title">Plan the event.<br />Keep the <em>final say.</em></h1>
+          <h1 className="hero-title">
+            Plan the event.<br />
+            Keep the <em>final say.</em>
+          </h1>
           <p className="hero-copy">
-            LoopEvent sources vendors, checks the numbers, and creates a complete event plan—then waits for your approval before anything happens.
+            LoopEvent finds real venues on a live SF map, checks capacity, fetches
+            reviews, then lets you hand-pick the best options — before AI drafts
+            booking emails and tracks confirmations on your dashboard.
           </p>
-          <div className="hero-points" aria-label="LoopEvent guarantees">
-            <span><i />Budget guardrails</span>
-            <span><i />Capacity checks</span>
-            <span><i />Approval required</span>
+          <div className="hero-steps">
+            {[
+              { n: "01", label: "Scout venues on the map" },
+              { n: "02", label: "Pick your favourites" },
+              { n: "03", label: "AI drafts booking emails" },
+              { n: "04", label: "Track confirmations" },
+            ].map(({ n, label }) => (
+              <div key={n} className="hero-step">
+                <span className="hero-step__num">{n}</span>
+                <span className="hero-step__label">{label}</span>
+              </div>
+            ))}
           </div>
         </section>
 
@@ -46,7 +60,12 @@ export default function Home() {
 
       <footer className="trust-strip">
         <span className="trust-label">The planning loop</span>
-        <div className="trust-items"><span>01. PLAN</span><span>02. VERIFY</span><span>03. APPROVE</span><span>04. EXECUTE</span></div>
+        <div className="trust-items">
+          <span>01. PLAN</span>
+          <span>02. SELECT</span>
+          <span>03. EMAIL</span>
+          <span>04. CONFIRM</span>
+        </div>
       </footer>
     </div>
   );

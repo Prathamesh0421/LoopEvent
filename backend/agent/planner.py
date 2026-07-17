@@ -12,32 +12,52 @@ logger = logging.getLogger(__name__)
 
 
 def _mock_planner_output(request: PlanRequest, vendor_quotes: list[VendorQuote]) -> PlannerOutput:
-    """Fallback planner logic that does a simple matching of vendors."""
-    # Find one venue, one food, one media
-    venue = next((v for v in vendor_quotes if v.category == "venue" and v.capacity >= request.attendees and v.available), None)
-    if not venue:
-        # Fallback to any venue
-        venue = next((v for v in vendor_quotes if v.category == "venue" and v.available), None)
-    
-    food = next((v for v in vendor_quotes if v.category == "food" and v.available), None)
-    media = next((v for v in vendor_quotes if v.category == "media" and v.available), None)
+    """Fallback planner: try every valid combination and pick the cheapest one within budget.
+    If nothing fits, pick the cheapest valid combination overall."""
 
-    items = []
-    total_cost = 0.0
-    for v in [venue, food, media]:
-        if v:
-            items.append(ItineraryItem(
-                vendor_id=v.vendor_id,
-                category=v.category,
-                name=v.name,
-                cost_usd=v.cost_usd
-            ))
-            total_cost += v.cost_usd
+    venues = sorted(
+        [v for v in vendor_quotes if v.category == "venue" and v.available and v.capacity >= request.attendees],
+        key=lambda v: v.cost_usd,
+    )
+    if not venues:
+        # no venue meets capacity – use cheapest available venue regardless
+        venues = sorted(
+            [v for v in vendor_quotes if v.category == "venue" and v.available],
+            key=lambda v: v.cost_usd,
+        )
 
+    foods = sorted([v for v in vendor_quotes if v.category == "food" and v.available], key=lambda v: v.cost_usd)
+    medias = sorted([v for v in vendor_quotes if v.category == "media" and v.available], key=lambda v: v.cost_usd)
+
+    best_within_budget = None
+    cheapest_overall = None
+
+    for venue in venues:
+        for food in foods:
+            for media in medias:
+                total = venue.cost_usd + food.cost_usd + media.cost_usd
+                combo = (venue, food, media, total)
+                if cheapest_overall is None or total < cheapest_overall[3]:
+                    cheapest_overall = combo
+                if total <= request.budget_usd:
+                    if best_within_budget is None or total < best_within_budget[3]:
+                        best_within_budget = combo
+
+    chosen = best_within_budget or cheapest_overall
+    if not chosen:
+        return PlannerOutput(items=[], total_proposed_cost=0.0, notes="Fallback planner: no vendors available.")
+
+    venue, food, media, total = chosen
+    items = [
+        ItineraryItem(vendor_id=venue.vendor_id, category=venue.category, name=venue.name, cost_usd=venue.cost_usd),
+        ItineraryItem(vendor_id=food.vendor_id, category=food.category, name=food.name, cost_usd=food.cost_usd),
+        ItineraryItem(vendor_id=media.vendor_id, category=media.category, name=media.name, cost_usd=media.cost_usd),
+    ]
+    note = "within budget" if best_within_budget else "cheapest valid (over budget)"
     return PlannerOutput(
         items=items,
-        total_proposed_cost=total_cost,
-        notes="Fallback planner: Selected cheapest available vendor quotes."
+        total_proposed_cost=total,
+        notes=f"Fallback planner: {note} combination selected.",
     )
 
 
