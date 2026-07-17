@@ -1,5 +1,11 @@
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
+function connectionError() {
+  return new Error(
+    "We can’t reach the planning service. Start the backend on port 8000, then try again."
+  );
+}
+
 async function parseResponse(response, fallbackMessage) {
   if (!response.ok) {
     const body = await response.json().catch(() => null);
@@ -9,23 +15,37 @@ async function parseResponse(response, fallbackMessage) {
 }
 
 export async function submitPlan(request) {
-  const response = await fetch(`${API_URL}/api/plan`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(request),
-  });
-  return parseResponse(response, "Failed to submit plan");
+  try {
+    const response = await fetch(`${API_URL}/api/plan`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(request),
+    });
+    return parseResponse(response, "We couldn’t create a plan. Please try again.");
+  } catch (error) {
+    if (error instanceof TypeError) throw connectionError();
+    throw error;
+  }
 }
 
 export async function getSession(sessionId) {
-  const response = await fetch(`${API_URL}/api/session/${sessionId}`);
-  return parseResponse(response, "Failed to fetch session");
+  try {
+    const response = await fetch(`${API_URL}/api/session/${sessionId}`);
+    return parseResponse(response, "We couldn’t refresh this event session.");
+  } catch (error) {
+    if (error instanceof TypeError) throw connectionError();
+    throw error;
+  }
 }
 
 export async function approveSession(sessionId) {
-  const response = await fetch(`${API_URL}/api/session/${sessionId}/approve`, {
-    method: "POST",
-  });
-  return parseResponse(response, "Failed to approve session");
+  try {
+    const response = await fetch(`${API_URL}/api/session/${sessionId}/approve`, {
+      method: "POST",
+    });
+    return parseResponse(response, "We couldn’t approve this plan. Please try again.");
+  } catch (error) {
+    if (error instanceof TypeError) throw connectionError();
+    throw error;
+  }
 }
-
