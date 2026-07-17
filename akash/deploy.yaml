@@ -1,0 +1,61 @@
+---
+version: "2.0"
+
+services:
+  backend:
+    image: <YOUR_DOCKERHUB_USERNAME>/loopevent-backend:latest
+    env:
+      - GEMINI_API_KEY=<set-via-akash-secrets>
+      - USE_NEXLA_LIVE=false
+      - USE_ZERO_LIVE=false
+    expose:
+      - port: 8000
+        as: 8000
+        to:
+          - global: true
+
+  frontend:
+    image: <YOUR_DOCKERHUB_USERNAME>/loopevent-frontend:latest
+    expose:
+      - port: 3000
+        as: 80
+        to:
+          - global: true
+
+profiles:
+  compute:
+    backend:
+      resources:
+        cpu:
+          units: 1.0
+        memory:
+          size: 1Gi
+        storage:
+          size: 2Gi
+    frontend:
+      resources:
+        cpu:
+          units: 0.5
+        memory:
+          size: 512Mi
+        storage:
+          size: 1Gi
+  placement:
+    dcloud:
+      pricing:
+        backend:
+          denom: uakt
+          amount: 1000
+        frontend:
+          denom: uakt
+          amount: 500
+
+deployment:
+  backend:
+    dcloud:
+      profile: backend
+      count: 1
+  frontend:
+    dcloud:
+      profile: frontend
+      count: 1

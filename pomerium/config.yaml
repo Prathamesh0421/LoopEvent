@@ -1,0 +1,24 @@
+# Demo-only local configuration. Do not use insecure_server outside local development.
+insecure_server: true
+address: :8443
+
+authenticate_service_url: http://localhost:8443
+
+idp_provider: google
+idp_client_id: ${IDP_CLIENT_ID}
+idp_client_secret: ${IDP_CLIENT_SECRET}
+cookie_secret: ${COOKIE_SECRET}
+
+routes:
+  - from: http://localhost:8443
+    to: http://frontend:3000
+    policy:
+      - allow:
+          or:
+            - email:
+                is: teammate1@example.com
+            - email:
+                is: teammate2@example.com
+            - email:
+                is: teammate3@example.com
+

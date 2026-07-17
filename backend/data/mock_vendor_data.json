@@ -1,0 +1,10 @@
+[
+  { "vendor_id": "v-hall-01", "category": "venue", "name": "SF Community Hall", "cost_usd": 1200, "capacity": 600, "available": true },
+  { "vendor_id": "v-loft-01", "category": "venue", "name": "Downtown Loft", "cost_usd": 800, "capacity": 150, "available": true },
+  { "vendor_id": "v-wh-01", "category": "venue", "name": "Bayview Warehouse Space", "cost_usd": 2500, "capacity": 650, "available": true },
+  { "vendor_id": "f-bac-01", "category": "food", "name": "Bay Area Catering Co", "cost_usd": 1800, "capacity": 500, "available": true },
+  { "vendor_id": "f-bb-01", "category": "food", "name": "Budget Bites Catering", "cost_usd": 900, "capacity": 200, "available": true },
+  { "vendor_id": "m-ggp-01", "category": "media", "name": "Golden Gate Photography", "cost_usd": 600, "capacity": 0, "available": true },
+  { "vendor_id": "m-qsm-01", "category": "media", "name": "Quick Snap Media", "cost_usd": 300, "capacity": 0, "available": true }
+]
+
