@@ -25,24 +25,26 @@ export default function EventForm({ onSubmit }) {
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12, maxWidth: 360 }}>
-      <label>
-        Attendees
-        <input type="number" min="1" value={attendees} onChange={(event) => setAttendees(event.target.value)} required />
+    <form className="event-form" onSubmit={handleSubmit}>
+      <div className="form-grid">
+        <label className="field-label">
+          <span>Guest count <small>PEOPLE</small></span>
+          <input className="field-input" type="number" min="1" value={attendees} onChange={(event) => setAttendees(event.target.value)} required />
+        </label>
+        <label className="field-label">
+          <span>Event budget <small>USD</small></span>
+          <input className="field-input" type="number" min="1" step="0.01" value={budget} onChange={(event) => setBudget(event.target.value)} required />
+        </label>
+      </div>
+      <label className="field-label">
+        <span>Where will it happen?</span>
+        <input className="field-input" type="text" value={location} onChange={(event) => setLocation(event.target.value)} required />
       </label>
-      <label>
-        Budget (USD)
-        <input type="number" min="1" step="0.01" value={budget} onChange={(event) => setBudget(event.target.value)} required />
-      </label>
-      <label>
-        Location
-        <input type="text" value={location} onChange={(event) => setLocation(event.target.value)} required />
-      </label>
-      <button type="submit" disabled={loading}>
-        {loading ? "Planning..." : "Plan Event"}
+      <button className="primary-button" type="submit" disabled={loading}>
+        {loading ? "Finding your best plan..." : "Create event plan"} <span className="button-arrow">→</span>
       </button>
-      {error && <p role="alert" style={{ color: "red" }}>{error}</p>}
+      {error && <p className="form-error" role="alert">{error}</p>}
+      <p className="form-note">Your plan will be reviewed against availability, capacity, and budget before any booking is made.</p>
     </form>
   );
 }
-
