@@ -1,11 +1,12 @@
 import json
 import os
-
 from google import genai
 from google.genai import types
 
+from models.schemas import PlanRequest, VendorQuote, PlannerOutput
 from agent.prompts import PLANNER_SYSTEM_PROMPT
-from models.schemas import PlanRequest, PlannerOutput, VendorQuote
+
+_client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
 
 
 def run_planner(
@@ -13,13 +14,13 @@ def run_planner(
     vendor_quotes: list[VendorQuote],
     previous_rejection_reason: str | None = None,
 ) -> PlannerOutput:
-    client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
     user_content = {
         "constraints": request.model_dump(),
-        "vendor_quotes": [quote.model_dump() for quote in vendor_quotes],
+        "vendor_quotes": [v.model_dump() for v in vendor_quotes],
         "previous_rejection_reason": previous_rejection_reason,
     }
-    response = client.models.generate_content(
+
+    response = _client.models.generate_content(
         model="gemini-3.5-flash",
         contents=json.dumps(user_content),
         config=types.GenerateContentConfig(
@@ -28,5 +29,11 @@ def run_planner(
             temperature=0.3,
         ),
     )
-    return PlannerOutput(**json.loads(response.text))
 
+    response_text = response.text.strip()
+    start = response_text.find("{")
+    if start != -1:
+        response_text = response_text[start:]
+    
+    data = json.JSONDecoder().raw_decode(response_text)[0]
+    return PlannerOutput(**data)
